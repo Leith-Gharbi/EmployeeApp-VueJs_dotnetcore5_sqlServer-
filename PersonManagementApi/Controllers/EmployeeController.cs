@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using PersonManagementApi.Models;
 using System.Data.SqlClient;
 using System.Data;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 
 namespace PersonManagementApi.Controllers
 {
@@ -13,10 +15,12 @@ namespace PersonManagementApi.Controllers
     {
 
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
 
-        public EmployeeController(IConfiguration configuration)
+        public EmployeeController(IConfiguration configuration , IWebHostEnvironment env)
         {
             _configuration = configuration;
+            _env = env;
         }
 
 
@@ -125,6 +129,31 @@ where EmployeeId=@EmployeeId ; ";
 
 
         }
+        [Route("SaveFile")]
+        [HttpPost]
+        public JsonResult SaveFile()
+        {
+            try
+            {
+                var httpRequest = Request.Form;
+                var postedFile = httpRequest.Files[0];
+                string filename = postedFile.FileName;
+                var physicalPath = _env.ContentRootPath + "/Photos/" + filename;
+                using(var stream = new FileStream(physicalPath,FileMode.Create))
+                {
+                    postedFile.CopyTo(stream);
+                }
+                return new JsonResult(filename);
+            }
+            catch (System.Exception)
+            {
+
+                return new JsonResult("anonymous.png");
+            }
+
+        }
+
+
     }
 }
 
